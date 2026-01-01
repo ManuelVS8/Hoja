@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>La Hoja - Partes de la hoja</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/icono.ico">
     <style>
         /* ====== Reset & base ====== */
         * { box-sizing: border-box; margin:0; padding:0; }
@@ -250,9 +251,7 @@
 <div class="game-container">
     <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
 
-    <!-- PANTALLA INICIO -->
     <section class="screen active" id="startScreen">
-        <!-- 1. Título y Subtítulo -->
         <header>
             <h1>La hoja</h1>
             <div class="subtitle">Las partes de la hoja</div>
@@ -264,17 +263,14 @@
                 <strong style="display:block; margin-top:0.5rem;">¡Ánimo!</strong>
             </div>
             
-            <!-- 2. Botón -->
             <button class="btn btn-primary" id="playBtn">Comenzar a aprender</button>
             
-            <!-- 3. Imagen -->
             <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Niños aprendiendo">
             
-            <!-- 4. Hall of Fame (ID y Clases según Prompt Inicial) -->
             <div class="hall-of-fame" id="hallOfFame">
-                <div class="hall-of-fame-title">🏆 Mejores puntuaciones 🏆</div>
-                <table class="hall-of-fame-table">
-                    <thead>
+              <div class="hall-of-fame-title">🏆 Mejores puntuaciones 🏆</div>
+              <table class="hall-of-fame-table">
+                  <thead>
                         <tr>
                             <th>Posición</th>
                             <th>Nombre</th>
@@ -283,14 +279,12 @@
                         </tr>
                     </thead>
                     <tbody id="hofTableBody">
-                        <tr><td colspan="4" class="hall-of-fame-loading">Cargando...</td></tr>
-                    </tbody>
-                </table>
+                      </tbody>
+              </table>
             </div>
         </div>
     </section>
 
-    <!-- PANTALLA RESUMEN -->
     <section class="screen" id="summaryScreen">
         <header>
             <h1>Estudia las partes de la hoja</h1>
@@ -307,7 +301,6 @@
         </div>
     </section>
 
-    <!-- PANTALLA JUEGO 1 -->
     <section class="screen" id="game1Screen">
         <header>
             <h1>Empareja las partes de la hoja</h1>
@@ -320,7 +313,6 @@
         <div class="cards-container" id="cardsContainerGame1"></div>
     </section>
 
-    <!-- PANTALLA JUEGO 2 -->
     <section class="screen" id="game2Screen">
         <header>
             <h1>Identifica las partes de la hoja</h1>
@@ -334,18 +326,15 @@
         <div class="game2-wrapper">
             <div class="image-wrapper" id="imageWrapperGame2">
                 <img src="https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/hoja.png" alt="Hoja para señalar">
-                <!-- Casillas generadas por JS -->
-            </div>
+                </div>
         </div>
     </section>
 
-    <!-- PANTALLA FINAL -->
     <section class="screen" id="finalScreen">
         <header>
             <h1 class="final-title">Partes de la hoja</h1>
         </header>
         <div class="results">
-            <!-- TROFEO: Icono de texto HTML animado -->
             <div id="trophyBox">🏆</div>
             
             <div class="score-title">Tu puntuación:</div>
@@ -359,7 +348,6 @@
     </section>
 </div>
 
-<!-- MODAL (ID submitModal) -->
 <div id="submitModal" class="modal-overlay">
     <div class="modal-content">
         <h3>¡Juego Terminado!</h3>
@@ -385,7 +373,7 @@
     let startTime = 0;
     let timerInterval = null;
     
-    // Variables para guardar el resultado final
+    // Variables GLOBALES para guardar el resultado final y enviar a HoF
     let finalScoreVal = 0; // Puntuación
     let finalTimeVal = 0; // Tiempo total (en segundos)
     
@@ -454,12 +442,12 @@
         startTime = Date.now();
         timerInterval = setInterval(() => {
             const elapsed = (Date.now() - startTime) / 1000;
-            // Formato MM:SS.d (redondeo décimas para evitar errores de visualización)
             const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
             const s = Math.floor(elapsed % 60).toString().padStart(2, '0');
             const ms = Math.round((elapsed % 1) * 10);
-            document.getElementById('timerGame1').textContent = `${m}:${s}.${ms}`;
-            document.getElementById('timerGame2').textContent = `${m}:${s}.${ms}`;
+            // Actualizamos ambos displays para mantener sincronización visual
+            if(document.getElementById('timerGame1')) document.getElementById('timerGame1').textContent = `${m}:${s}.${ms}`;
+            if(document.getElementById('timerGame2')) document.getElementById('timerGame2').textContent = `${m}:${s}.${ms}`;
         }, 100);
     }
 
@@ -533,12 +521,10 @@
                 matchesFound++;
                 updateProgress('progressFillGame1', (matchesFound / 5) * 100);
                 selectedCards = [];
-                if (matchesFound === 5) {
-                    // NO detener el tiempo. Pasamos al juego 2 con el contador corriendo
-                    setTimeout(() => initGame2(), 1000);
-                }
+                if (matchesFound === 5) setTimeout(() => initGame2(), 1000);
             } else {
                 playSound('error');
+                // Feedback visual instantáneo sin bloqueo
                 c1.classList.remove('selected'); c2.classList.remove('selected');
                 c1.classList.add('flash-error'); c2.classList.add('flash-error');
                 selectedCards = [];
@@ -578,6 +564,10 @@
         document.getElementById('attemptsGame2').textContent = '0';
         updateProgress('progressFillGame2', 50); 
         document.getElementById('targetDisplay').textContent = `Busca: ${targetsQueue[0].name}`;
+        
+        // Ajuste estético: Reseteamos el display del Juego 2 visualmente a 00:00.0
+        // Pero el temporizador global sigue corriendo por debajo.
+        // El tiempo final se calcula al terminar el Juego 2.
     }
 
     function checkZone(box) {
@@ -587,6 +577,7 @@
         if (box.dataset.id === targetsQueue[currentIndex].id) {
             playSound('correct');
             
+            // Animación de Flash Verde
             box.classList.add('correct-flash');
             setTimeout(() => {
                 box.classList.remove('correct-flash');
@@ -598,11 +589,11 @@
             if (currentIndex < targetsQueue.length) {
                 document.getElementById('targetDisplay').textContent = `Busca: ${targetsQueue[currentIndex].name}`;
             } else {
-                // Al terminar el Juego 2, FINALIZAMOS EL JUEGO ENTERO (STOP TIMER)
                 setTimeout(finishGame, 500);
             }
         } else {
             playSound('error');
+            // Animación de Flash Rojo
             box.classList.add('wrong-flash');
             setTimeout(() => {
                 box.classList.remove('wrong-flash');
@@ -616,7 +607,6 @@
 
     /* --- 3. LÓGICA Y FUNCIONALIDAD JAVASCRIPT --- */
     
-    // Variables de control HoF
     let isHofLoading = false;
 
     function loadHallOfFame() {
@@ -624,9 +614,12 @@
         isHofLoading = true;
 
         const tbody = document.getElementById('hofTableBody');
-        tbody.innerHTML = ''; 
+        // Mensaje inicial de carga
+        tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-loading">Cargando datos...</td></tr>';
 
-        fetch(`${APP_SCRIPT_URL}?action=read&sheet=${SHEET_NAME}`)
+        const url = `${APP_SCRIPT_URL}?action=read&sheet=${SHEET_NAME}`;
+
+        fetch(url)
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'success' && data.data) {
@@ -650,7 +643,7 @@
                     const validData = processedData.filter(row => row.Puntuación !== null && !isNaN(parseFloat(row.Puntuación)));
 
                     if (validData.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No hay datos válidos.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">Aún no hay datos. Sé el primero en añadir puntuación</td></tr>';
                     } else {
                         // Ordenar
                         validData.sort((a, b) => {
@@ -662,17 +655,15 @@
                             return timeA - timeB;
                         });
 
-                        // Seleccionar los 10 mejores (o los que haya si hay menos de 10)
+                        tbody.innerHTML = '';
+                        
+                        // Seleccionar los 10 mejores
                         const top10 = validData.slice(0, 10);
 
-                        // Llenar filas
                         for (let i = 0; i < top10.length; i++) {
                             const item = top10[i];
                             const tr = document.createElement('tr');
-                            
                             const displayName = `${item.Nombre} ${item.Apellidos}`.trim();
-                            
-                            // Formatear tiempo para visualización
                             let timeStr = item.Tiempo;
                             if (!isNaN(parseFloat(item.Tiempo))) {
                                 const tVal = parseFloat(item.Tiempo);
@@ -694,7 +685,7 @@
                     }
 
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No hay puntuaciones aún.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">Error de conexión.</td></tr>';
                 }
             })
             .catch(e => {
@@ -717,14 +708,16 @@
         document.getElementById('submitModal').style.display = 'none'; 
     };
 
+    // C. Función submitScore (POST)
     document.getElementById('submitScoreBtn').onclick = () => {
         const btn = document.getElementById('submitScoreBtn');
         const nameInput = document.getElementById('playerName');
         const surnameInput = document.getElementById('playerSurname');
         
+        // CRÍTICO: Usar las variables globales calculadas en finishGame()
         const payload = {
             score: finalScoreVal,
-            time: finalTimeVal,
+            time: finalTimeVal, 
             name: nameInput.value.trim(),
             surname: surnameInput.value.trim()
         };
@@ -734,6 +727,7 @@
             btn.textContent = "ENVIANDO...";
             btn.disabled = true;
 
+            // REQUISITO TÉCNICO CRÍTICO: Configuración exacta para evitar CORS y errores de lectura
             fetch(APP_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -762,10 +756,10 @@
         // DETENER EL TEMPORIZADOR GLOBAL
         stopTimer();
         
-        // Calcular el tiempo transcurrido exacto
+        // Calcular el tiempo transcurrido exacto (Solo una vez)
         finalTimeVal = (Date.now() - startTime) / 1000;
         
-        // Cálculo de puntuación
+        // Cálculo de puntuación exacto (Solo una vez)
         const eff1 = attemptsGame1 > 0 ? (correctPairsGame1 / attemptsGame1) : 0;
         const eff2 = attemptsGame2 > 0 ? (correctPairsGame2 / attemptsGame2) : 0;
         finalScoreVal = Math.round(((eff1 + eff2) / 2) * 100);

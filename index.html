@@ -96,7 +96,7 @@
         .memory-card.selected { background-color: #f1c40f; transform: scale(1.05); }
         .memory-card.matched { background-color: #27ae60; color: white; cursor: default; }
         
-        /* Feedback visual rápido para errores (sin retardo de bloqueo) */
+        /* Feedback visual rápido para errores */
         .memory-card.flash-error {
             animation: shakeRed 0.3s ease-in-out;
         }
@@ -150,8 +150,22 @@
         .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; }
         .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
         .final-time{ color:var(--blue-700); }
-        .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; display:none; }
-        @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+        
+        /* TROFEO */
+        .trophy{ 
+            font-size:clamp(4rem,10vw,6rem); 
+            margin:.2rem 0; 
+            color:var(--orange); 
+            /* Animación de rebote activa por defecto en la clase */
+            animation:bounce 1s ease infinite; 
+            display:none; /* Oculto por defecto */
+        }
+        
+        @keyframes bounce { 
+            0%,100%{ transform:translateY(0);} 
+            50%{ transform:translateY(-8px);} 
+        }
+        
         .credit{ color:var(--blue-700); margin-top:1rem; }
         
         #finalMsg { font-size: clamp(1.2rem, 4.2vw, 1.8rem); font-weight: 800; color: var(--blue-700); margin-top: 0.6rem; }
@@ -500,15 +514,10 @@
                 if (matchesFound === 5) setTimeout(() => initGame2(), 1000);
             } else {
                 playSound('error');
-                
-                // Feedback visual instantáneo (sin bloqueo de tiempo)
+                // Feedback visual instantáneo sin bloqueo
                 c1.classList.remove('selected'); c2.classList.remove('selected');
                 c1.classList.add('flash-error'); c2.classList.add('flash-error');
-                
-                // Limpieza inmediata de las tarjetas seleccionadas para permitir jugar rápido
                 selectedCards = [];
-                
-                // Limpieza de la clase de animación después de que termine (300ms)
                 setTimeout(() => {
                     c1.classList.remove('flash-error');
                     c2.classList.remove('flash-error');
@@ -614,29 +623,27 @@
                         };
                     });
 
-                    // Filtrar SOLO los que tienen puntuación válida (evitar filas vacías de prueba)
+                    // Filtrar SOLO los que tienen puntuación válida
                     const validData = processedData.filter(row => row.Puntuación !== null && !isNaN(parseFloat(row.Puntuación)));
 
-                    if (validData.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No hay datos válidos.</td></tr>';
-                    } else {
-                        // Ordenar por Puntuación (Desc) y Tiempo (Asc)
-                        validData.sort((a, b) => {
-                            const scoreA = parseFloat(a.Puntuación) || 0;
-                            const scoreB = parseFloat(b.Puntuación) || 0;
-                            if (scoreB !== scoreA) return scoreB - scoreA;
-                            const timeA = parseFloat(a.Tiempo) || 9999;
-                            const timeB = parseFloat(b.Tiempo) || 9999;
-                            return timeA - timeB;
-                        });
+                    // Ordenar
+                    validData.sort((a, b) => {
+                        const scoreA = parseFloat(a.Puntuación) || 0;
+                        const scoreB = parseFloat(b.Puntuación) || 0;
+                        if (scoreB !== scoreA) return scoreB - scoreA;
+                        const timeA = parseFloat(a.Tiempo) || 9999;
+                        const timeB = parseFloat(b.Tiempo) || 9999;
+                        return timeA - timeB;
+                    });
 
-                        // Seleccionar los 10 mejores (aseguramos que haya 10 si existen)
-                        const top10 = validData.slice(0, 10);
+                    // Llenar hasta 10 filas exactas
+                    // Si hay menos datos válidos, rellenamos con filas vacías para llegar a 10
+                    for (let i = 0; i < 10; i++) {
+                        const tr = document.createElement('tr');
+                        const item = validData[i];
 
-                        top10.forEach((item, index) => {
-                            const tr = document.createElement('tr');
+                        if (item) {
                             const displayName = `${item.Nombre} ${item.Apellidos}`.trim();
-                            
                             let timeStr = item.Tiempo;
                             if (!isNaN(parseFloat(item.Tiempo))) {
                                 const tVal = parseFloat(item.Tiempo);
@@ -648,14 +655,23 @@
                             const points = item.Puntuación || 0;
 
                             tr.innerHTML = `
-                                <td>${index +1}º</td>
+                                <td>${i +1}º</td>
                                 <td>${displayName}</td>
                                 <td>${points}</td>
                                 <td>${timeStr}</td>
                             `;
-                            tbody.appendChild(tr);
-                        });
+                        } else {
+                            // Fila vacía para mantener estructura de 10
+                            tr.innerHTML = `
+                                <td>${i +1}º</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            `;
+                        }
+                        tbody.appendChild(tr);
                     }
+
                 } else {
                     tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No hay puntuaciones aún.</td></tr>';
                 }
@@ -736,7 +752,7 @@
         const msg = document.getElementById('finalMsg');
         
         if (finalScore === 100) {
-            trophyBox.style.display = 'block';
+            trophyBox.style.display = 'block'; // Mostrar trofeo (clase .trophy ya tiene la animación)
             msg.textContent = '¡Enhorabuena, puntuación máxima!';
             playSound('victory');
             createConfetti();

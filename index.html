@@ -95,6 +95,19 @@
         .memory-card:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .memory-card.selected { background-color: #f1c40f; transform: scale(1.05); }
         .memory-card.matched { background-color: #27ae60; color: white; cursor: default; }
+        
+        /* Feedback visual rápido para errores (sin retardo de bloqueo) */
+        .memory-card.flash-error {
+            animation: shakeRed 0.3s ease-in-out;
+        }
+        @keyframes shakeRed {
+            0% { background-color: #3498db; transform: translateX(0); }
+            20% { background-color: #e74c3c; transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+            100% { background-color: #3498db; transform: translateX(0); }
+        }
 
         /* Juego 2 (Señalar) */
         .game-instruction { font-size: 1.5rem; color: var(--blue); margin: 10px 0; font-weight: bold; text-align: center; }
@@ -104,18 +117,18 @@
         
         .selection-box {
             position: absolute;
-            background-color: #FFFFFF; /* Fondo blanco sólido */
-            border: 3px solid #000000; /* Borde negro */
+            background-color: #FFFFFF; 
+            border: 3px solid #000000; 
             cursor: pointer;
             transition: background-color 0.1s ease, transform 0.1s ease; 
         }
 
         /* Animaciones de Feedback Visual para Juego 2 */
         .selection-box.correct-flash {
-            animation: flashGreen 0.4s ease-in-out;
+            animation: flashGreen 0.3s ease-in-out;
         }
         .selection-box.wrong-flash {
-            animation: flashRed 0.4s ease-in-out;
+            animation: flashRed 0.3s ease-in-out;
         }
 
         @keyframes flashGreen {
@@ -411,10 +424,10 @@
         stopTimer();
         startTime = Date.now();
         timerInterval = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000; // Segundos flotantes para precisión
+            const elapsed = (Date.now() - startTime) / 1000;
             const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
             const s = Math.floor(elapsed % 60).toString().padStart(2, '0');
-            const ms = Math.floor((elapsed % 1) * 10); // 1 decimal
+            const ms = Math.floor((elapsed % 1) * 10);
             document.getElementById(displayId).textContent = `${m}:${s}.${ms}`;
         }, 100);
     }
@@ -487,7 +500,19 @@
                 if (matchesFound === 5) setTimeout(() => initGame2(), 1000);
             } else {
                 playSound('error');
-                setTimeout(() => { c1.classList.remove('selected'); c2.classList.remove('selected'); selectedCards = []; }, 1000);
+                
+                // Feedback visual instantáneo (sin bloqueo de tiempo)
+                c1.classList.remove('selected'); c2.classList.remove('selected');
+                c1.classList.add('flash-error'); c2.classList.add('flash-error');
+                
+                // Limpieza inmediata de las tarjetas seleccionadas para permitir jugar rápido
+                selectedCards = [];
+                
+                // Limpieza de la clase de animación después de que termine (300ms)
+                setTimeout(() => {
+                    c1.classList.remove('flash-error');
+                    c2.classList.remove('flash-error');
+                }, 300);
             }
         }
     }
@@ -533,7 +558,7 @@
             box.classList.add('correct-flash');
             setTimeout(() => {
                 box.classList.remove('correct-flash');
-            }, 400);
+            }, 300);
 
             currentIndex++;
             updateProgress('progressFillGame2', (50 + (currentIndex/5)*50));
@@ -549,7 +574,7 @@
             box.classList.add('wrong-flash');
             setTimeout(() => {
                 box.classList.remove('wrong-flash');
-            }, 400);
+            }, 300);
         }
     }
 
@@ -589,24 +614,29 @@
                         };
                     });
 
-                    const validData = processedData.filter(row => row.Nombre && row.Puntuación !== null);
+                    // Filtrar SOLO los que tienen puntuación válida (evitar filas vacías de prueba)
+                    const validData = processedData.filter(row => row.Puntuación !== null && !isNaN(parseFloat(row.Puntuación)));
 
                     if (validData.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4" class="hall-of-fame-error">No hay datos válidos.</td></tr>';
                     } else {
+                        // Ordenar por Puntuación (Desc) y Tiempo (Asc)
                         validData.sort((a, b) => {
-                            const scoreA = parseInt(a.Puntuación) || 0;
-                            const scoreB = parseInt(b.Puntuación) || 0;
+                            const scoreA = parseFloat(a.Puntuación) || 0;
+                            const scoreB = parseFloat(b.Puntuación) || 0;
                             if (scoreB !== scoreA) return scoreB - scoreA;
                             const timeA = parseFloat(a.Tiempo) || 9999;
                             const timeB = parseFloat(b.Tiempo) || 9999;
                             return timeA - timeB;
                         });
 
-                        validData.slice(0, 10).forEach((item, index) => {
+                        // Seleccionar los 10 mejores (aseguramos que haya 10 si existen)
+                        const top10 = validData.slice(0, 10);
+
+                        top10.forEach((item, index) => {
                             const tr = document.createElement('tr');
                             const displayName = `${item.Nombre} ${item.Apellidos}`.trim();
-                            // Usar el tiempo tal cual viene o formatear si es número
+                            
                             let timeStr = item.Tiempo;
                             if (!isNaN(parseFloat(item.Tiempo))) {
                                 const tVal = parseFloat(item.Tiempo);
@@ -618,7 +648,7 @@
                             const points = item.Puntuación || 0;
 
                             tr.innerHTML = `
-                                <td>${index + 1}º</td>
+                                <td>${index +1}º</td>
                                 <td>${displayName}</td>
                                 <td>${points}</td>
                                 <td>${timeStr}</td>
@@ -657,7 +687,7 @@
         
         const payload = {
             score: parseInt(document.getElementById('finalScore').textContent),
-            time: parseFloat(document.getElementById('finalTime').textContent.replace(':','.')), // Convertir MM:SS.ms a segundos decimales
+            time: parseFloat(document.getElementById('finalTime').textContent.replace(':','.')),
             name: nameInput.value.trim(),
             surname: surnameInput.value.trim()
         };
@@ -693,11 +723,10 @@
     /* --- FINALIZAR --- */
     function finishGame() {
         stopTimer();
-        const finalTimeVal = (Date.now() - startTime) / 1000; // Segundos con decimales
+        const finalTimeVal = (Date.now() - startTime) / 1000;
         
-        // Cálculo de puntuación
-        const eff1 = attemptsGame1 > 0 ? (correctPairsGame1 / attemptsGame1) : 0;
-        const eff2 = attemptsGame2 > 0 ? (correctPairsGame2 / attemptsGame2) : 0;
+        const eff1 = attemptsGame1 > 0 ? (correctPairsGame1 / attemptsGame1) :0;
+        const eff2 = attemptsGame2 > 0 ? (correctPairsGame2 / attemptsGame2) :0;
         const finalScore = Math.round(((eff1 + eff2) / 2) * 100);
 
         document.getElementById('finalScore').textContent = finalScore;
